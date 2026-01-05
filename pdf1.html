@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Play Store Reviews</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+
+<body class="bg-gradient-to-br from-indigo-100 to-blue-200 min-h-screen flex justify-center items-center">
+
+<div class="bg-white w-full max-w-md rounded-xl shadow-xl p-4">
+
+<h2 class="text-2xl font-bold text-center text-indigo-600 mb-3">
+<i class="fa-brands fa-google-play"></i> Play Store Reviews
+</h2>
+
+<input id="link" class="w-full border p-2 rounded mb-2" placeholder="App ID or Link">
+<input id="date" type="date" class="w-full border p-2 rounded mb-2">
+
+<button onclick="loadReviews()" class="w-full bg-indigo-600 text-white py-2 rounded font-semibold">
+Get Reviews
+</button>
+
+<div id="meta" class="text-sm text-gray-700 mt-2 hidden"></div>
+
+<div id="searchBox" class="hidden mt-3">
+<input id="searchInput" class="w-full border p-2 rounded" placeholder="Search name">
+<button onclick="searchReviews()" class="mt-2 w-full bg-green-600 text-white py-1 rounded">
+Search & Scroll
+</button>
+</div>
+
+<div class="flex mt-4 border rounded overflow-hidden">
+<button id="tabList" onclick="showTab('list')" class="flex-1 bg-indigo-600 text-white py-1">All Reviews</button>
+<button id="tabMy" onclick="showTab('my')" class="flex-1 bg-gray-200 py-1">Find My Review</button>
+</div>
+
+<div id="tab-list" class="mt-3 max-h-72 overflow-y-auto"></div>
+
+<div id="tab-my" class="hidden mt-3">
+<textarea id="myReviewText" class="w-full border p-2 rounded" placeholder="Paste your review"></textarea>
+<button onclick="findMyReview()" class="w-full mt-2 bg-emerald-600 text-white py-2 rounded">
+Find My Review
+</button>
+<div id="myReviewResult" class="mt-2"></div>
+</div>
+
+<button onclick="downloadPDF()" class="w-full mt-4 bg-emerald-700 text-white py-2 rounded">
+Download PDF
+</button>
+
+</div>
+
+<script>
+let allReviews = [];
+
+function toast(t,c="#4f46e5"){
+Toastify({text:t,duration:2500,gravity:"top",style:{background:c}}).showToast()
+}
+
+function loadReviews(){
+const link = linkEl.value, date = dateEl.value;
+if(!link||!date) return toast("Input required","#dc2626");
+
+fetch(`/reviews?link=${encodeURIComponent(link)}&date=${date}`)
+.then(r=>r.json()).then(res=>{
+if(res.status!=="success") return toast(res.message,"#dc2626");
+
+allReviews=res.data;
+meta.innerHTML=`<b>App:</b> ${link}<br><b>Date:</b> ${date}<br><b>Total Reviews:</b> ${res.count}`;
+meta.classList.remove("hidden");
+searchBox.classList.remove("hidden");
+
+renderReviews(allReviews);
+});
+}
+
+function renderReviews(data){
+tabListDiv.innerHTML="";
+data.forEach((r,i)=>{
+tabListDiv.innerHTML+=`
+<div id="r${i}" class="border-b py-1 flex gap-2">
+<i class="fa fa-user text-indigo-500"></i>${r.user}
+</div>`;
+});
+}
+
+function searchReviews(){
+const q=searchInput.value.toLowerCase();
+const i=allReviews.findIndex(r=>r.user.toLowerCase().includes(q));
+if(i<0) return toast("Not found","#dc2626");
+document.querySelectorAll("#tab-list div").forEach(d=>d.classList.remove("bg-yellow-200"));
+const el=document.getElementById("r"+i);
+el.classList.add("bg-yellow-200");
+el.scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function showTab(t){
+tabList.className="flex-1 py-1"; tabMy.className="flex-1 py-1";
+tabListDiv.classList.add("hidden"); tabMyDiv.classList.add("hidden");
+if(t==="list"){tabList.classList.add("bg-indigo-600","text-white");tabListDiv.classList.remove("hidden")}
+else{tabMy.classList.add("bg-indigo-600","text-white");tabMyDiv.classList.remove("hidden")}
+}
+
+function findMyReview(){
+const txt=myReviewText.value.toLowerCase();
+const m=allReviews.find(r=>r.review.toLowerCase().includes(txt));
+if(!m) return myReviewResult.innerHTML="<p class='text-red-600'>❌ Review not found</p>";
+myReviewResult.innerHTML=`<div class="p-2 border bg-green-50">
+<b>Name:</b> ${m.user}<br>${m.review}</div>`;
+}
+
+function downloadPDF(){
+window.open(`/reviews-pdf?link=${encodeURIComponent(linkEl.value)}&date=${dateEl.value}`);
+}
+
+const linkEl=link, dateEl=date, meta=meta, searchBox=searchBox,
+tabListDiv=document.getElementById("tab-list"),
+tabMyDiv=document.getElementById("tab-my");
+</script>
+
+</body>
+  </html>
