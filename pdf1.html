@@ -163,8 +163,11 @@ let currentDate = null;
 let loading = false;
 let noMore = false;
 
-function loadReviews(reset=false) {
-  if (loading || noMore) return;
+function loadReviews(reset = false) {
+  if (loading) return;
+
+  // 🔥 allow reset even if noMore was true
+  if (!reset && noMore) return;
 
   const link = linkEl().value;
   const date = dateEl().value;
@@ -174,7 +177,7 @@ function loadReviews(reset=false) {
     allReviews = [];
     output().innerHTML = "";
     currentDate = new Date(date);
-    noMore = false;
+    noMore = false; // 🔥 critical
     document.getElementById("searchBox").style.display = "block";
     loader().innerText = "Loading...";
   }
@@ -188,6 +191,7 @@ function loadReviews(reset=false) {
       if (!res.data || res.data.length === 0) {
         noMore = true;
         loader().innerText = "No more reviews";
+        loading = false; // 🔥 important
         return;
       }
 
@@ -202,7 +206,7 @@ function loadReviews(reset=false) {
       loader().innerText = "Error loading";
       loading = false;
     });
-}
+  }
 
 function render(data) {
   output().innerHTML = "";
