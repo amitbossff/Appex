@@ -6,131 +6,34 @@
 <title>Play Store Reviews</title>
 
 <style>
-* {
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+*{box-sizing:border-box;font-family:system-ui}
+body{margin:0;background:#f3f4f6;padding:12px}
+.app{
+  max-width:420px;margin:auto;background:#fff;border-radius:12px;
+  box-shadow:0 8px 30px rgba(0,0,0,.08);
+  display:flex;flex-direction:column;height:calc(100vh - 24px)
 }
-
-body {
-  margin: 0;
-  background: #f3f4f6;
-  padding: 12px;
+.header{
+  padding:14px;text-align:center;font-weight:600;
+  border-bottom:1px solid #e5e7eb
 }
-
-/* App Container */
-.app {
-  max-width: 420px;
-  margin: auto;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 24px);
+.form{padding:12px;display:grid;gap:10px}
+input,button{
+  padding:10px 12px;border-radius:8px;border:1px solid #d1d5db
 }
-
-/* Header */
-.header {
-  padding: 14px;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  text-align: center;
-  font-size: 16px;
-}
-
-/* Form */
-.form {
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-}
-
-input, button {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
-}
-
-input:focus {
-  outline: none;
-  border-color: #000;
-}
-
-button {
-  background: #000;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-}
-
-button:active {
-  opacity: 0.85;
-}
-
-/* Search */
-.search {
-  padding: 0 12px 12px;
-}
-
-.search-row {
-  display: flex;
-  gap: 8px;
-}
-
-.search-row button {
-  background: #e5e7eb;
-  color: #000;
-  min-width: 44px;
-}
-
-/* Reviews */
-.reviews {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 12px;
-}
-
-.review {
-  padding: 10px 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.review-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 2px;
-}
-
-.review-text {
-  font-size: 14px;
-  color: #111;
-}
-
-.review-date {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-/* Loader */
-.loader {
-  text-align: center;
-  font-size: 13px;
-  color: #6b7280;
-  padding: 10px;
-  display: none;
-}
-
-/* Desktop */
-@media (min-width: 768px) {
-  body {
-    padding: 40px;
-  }
-  .app {
-    height: 600px;
-  }
+button{background:#000;color:#fff;border:none;cursor:pointer}
+.search{padding:0 12px 12px}
+.search-row{display:flex;gap:8px}
+.search-row button{background:#e5e7eb;color:#000;min-width:44px}
+.reviews{flex:1;overflow-y:auto;padding:0 12px}
+.review{border-bottom:1px solid #e5e7eb;padding:10px 0}
+.review-name{font-size:13px;font-weight:600}
+.review-text{font-size:14px}
+.review-date{font-size:12px;color:#6b7280}
+.loader{text-align:center;font-size:13px;color:#6b7280;padding:10px;display:none}
+@media(min-width:768px){
+  body{padding:40px}
+  .app{height:600px}
 }
 </style>
 </head>
@@ -138,7 +41,7 @@ button:active {
 <body>
 
 <div class="app">
-
+  <div class="header">Play Store Reviews</div>
 
   <div class="form">
     <input id="link" placeholder="App ID or Play Store Link">
@@ -146,111 +49,90 @@ button:active {
     <button onclick="loadReviews(true)">Load Reviews</button>
   </div>
 
-  <!-- Search Box -->
   <div class="search" id="searchBox" style="display:none">
     <div class="search-row">
-      <input id="searchInput"
-             placeholder="Search reviews..."
-             oninput="searchReviews()"
-             style="flex:1">
+      <input id="searchInput" placeholder="Search reviews..." oninput="searchReviews()" style="flex:1">
       <button onclick="clearSearch()">✕</button>
     </div>
   </div>
 
-  <!-- Reviews -->
   <div class="reviews" id="output"></div>
-
-  <!-- Loader -->
   <div class="loader" id="loader">Loading...</div>
 </div>
 
 <script>
-let allReviews = [];
-let currentDate = null;
-let loading = false;
-let noMore = false;
+let allReviews=[],currentDate=null,loading=false,noMore=false;
 
-function loadReviews(reset = false) {
-  if (loading) return;
-  if (!reset && noMore) return;
+function loadReviews(reset=false){
+  if(loading) return;
+  if(!reset && noMore) return;
 
-  const link = linkEl().value;
-  const date = dateEl().value;
-  if (!link || !date) return;
+  const link=linkEl().value,date=dateEl().value;
+  if(!link||!date) return;
 
-  if (reset) {
-    allReviews = [];
-    output().innerHTML = "";
-    currentDate = new Date(date);
-    noMore = false;
-    document.getElementById("searchBox").style.display = "block";
-    loader().innerText = "Loading...";
+  if(reset){
+    allReviews=[];
+    output().innerHTML="";
+    currentDate=new Date(date);
+    noMore=false;
+    loader().innerText="Loading...";
+    document.getElementById("searchBox").style.display="block";
   }
 
-  loading = true;
-  loader().style.display = "block";
+  loading=true;
+  loader().style.display="block";
 
   fetch(`/reviews?link=${encodeURIComponent(link)}&date=${fmt(currentDate)}`)
-    .then(r => r.json())
-    .then(res => {
-      if (!res.data || res.data.length === 0) {
-        noMore = true;
-        loader().innerText = "No more reviews";
-        loading = false;
-        return;
-      }
-
-      allReviews.push(...res.data);
-      render(allReviews);
-      currentDate.setDate(currentDate.getDate() - 1);
-
-      loader().style.display = "none";
-      loading = false;
-    })
-    .catch(() => {
-      loader().innerText = "Error loading";
-      loading = false;
-    });
-}
-
-function render(data) {
-  output().innerHTML = "";
-  data.forEach(r => {
-    const div = document.createElement("div");
-    div.className = "review";
-    div.innerHTML = `
-      <div class="review-name">${r.userName || "Anonymous"}</div>
-      <div class="review-text">${r.review}</div>
-      <div class="review-date">${r.date}</div>
-    `;
-    output().appendChild(div);
+  .then(r=>r.json())
+  .then(res=>{
+    if(!res.data||res.data.length===0){
+      noMore=true;
+      loader().innerText="No more reviews";
+      loading=false;
+      return;
+    }
+    allReviews.push(...res.data);
+    render(allReviews);
+    currentDate.setDate(currentDate.getDate()-1);
+    loader().style.display="none";
+    loading=false;
+  })
+  .catch(()=>{
+    loader().innerText="Error loading";
+    loading=false;
   });
 }
 
-function searchReviews() {
-  const q = document.getElementById("searchInput").value.toLowerCase();
-  render(allReviews.filter(r => r.review.toLowerCase().includes(q)));
+function render(data){
+  output().innerHTML="";
+  data.forEach(r=>{
+    const d=document.createElement("div");
+    d.className="review";
+    d.innerHTML=`
+      <div class="review-name">${r.userName||"Anonymous"}</div>
+      <div class="review-text">${r.review}</div>
+      <div class="review-date">${r.date}</div>`;
+    output().appendChild(d);
+  });
 }
 
-function clearSearch() {
-  document.getElementById("searchInput").value = "";
-  render(allReviews);
+function searchReviews(){
+  const q=searchInput.value.toLowerCase();
+  render(allReviews.filter(r=>r.review.toLowerCase().includes(q)));
 }
-
-/* Infinite Scroll */
-output().addEventListener("scroll", () => {
-  if (output().scrollTop + output().clientHeight >= output().scrollHeight - 10) {
+function clearSearch(){searchInput.value="";render(allReviews)}
+output().addEventListener("scroll",()=>{
+  if(output().scrollTop+output().clientHeight>=output().scrollHeight-10){
     loadReviews(false);
   }
 });
 
-/* Helpers */
-function fmt(d){ return d.toISOString().split("T")[0]; }
-function output(){ return document.getElementById("output"); }
-function loader(){ return document.getElementById("loader"); }
-function linkEl(){ return document.getElementById("link"); }
-function dateEl(){ return document.getElementById("date"); }
+function fmt(d){return d.toISOString().split("T")[0]}
+function output(){return document.getElementById("output")}
+function loader(){return document.getElementById("loader")}
+function linkEl(){return document.getElementById("link")}
+function dateEl(){return document.getElementById("date")}
 </script>
 
 </body>
-</html>
+  </html>
