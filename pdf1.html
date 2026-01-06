@@ -5,45 +5,137 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Play Store Reviews</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<style>
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f3f4f6;
+  padding: 12px;
+}
+
+/* Container */
+.app {
+  max-width: 420px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 24px);
+}
+
+/* Header */
+.header {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  text-align: center;
+  font-size: 16px;
+}
+
+/* Form */
+.form {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+input, button {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #000;
+}
+
+button {
+  background: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+button:active {
+  opacity: 0.85;
+}
+
+/* Search */
+.search {
+  padding: 0 12px 12px;
+}
+
+/* Reviews */
+.reviews {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px;
+}
+
+.review {
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.review-text {
+  font-size: 14px;
+  color: #111;
+}
+
+.review-date {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Loader */
+.loader {
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+  padding: 10px;
+  display: none;
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  body {
+    padding: 40px;
+  }
+  .app {
+    height: 600px;
+  }
+}
+</style>
 </head>
 
-<body class="bg-gray-100">
+<body>
 
-<div class="max-w-md mx-auto bg-white min-h-screen flex flex-col">
+<div class="app">
+  <div class="header">Play Store Reviews</div>
 
-<!-- HEADER -->
-<div class="sticky top-0 bg-white border-b p-3 z-10">
-  <h2 class="text-center font-bold text-lg mb-2">Play Store Reviews</h2>
+  <div class="form">
+    <input id="link" placeholder="App ID or Play Store Link">
+    <input id="date" type="date">
+    <button onclick="loadReviews(true)">Load Reviews</button>
+  </div>
 
-  <input id="link" class="w-full border rounded p-2 mb-2 text-sm"
-         placeholder="App ID / Play Store Link">
+  <div class="search" id="searchBox" style="display:none">
+    <input id="searchInput" placeholder="Search reviews..." oninput="searchReviews()">
+  </div>
 
-  <input id="date" type="date"
-         class="w-full border rounded p-2 mb-2 text-sm">
+  <div class="reviews" id="output"></div>
 
-  <button onclick="loadReviews(true)"
-          class="w-full bg-black text-white py-2 rounded text-sm">
-    Load Reviews
-  </button>
-
-  <input id="searchInput"
-         class="w-full border rounded p-2 mt-2 text-sm"
-         placeholder="Paste review text to jump"
-         oninput="searchAndScroll()">
+  <div class="loader" id="loader">Loading...</div>
 </div>
-
-<!-- REVIEWS -->
-<div id="output" class="flex-1 overflow-y-auto p-3 space-y-3 text-sm"></div>
-
-<div id="loader" class="text-center text-gray-500 py-3 hidden">
-  Loading...
-</div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 <script>
 let allReviews = [];
@@ -51,32 +143,28 @@ let currentDate = null;
 let loading = false;
 let noMore = false;
 
-/* LOAD REVIEWS */
 function loadReviews(reset=false) {
   if (loading || noMore) return;
 
-  const link = linkEl().value.trim();
+  const link = linkEl().value;
   const date = dateEl().value;
-
-  if (!link || !date) {
-    Toastify({ text: "Enter app link & date", duration: 2000 }).showToast();
-    return;
-  }
+  if (!link || !date) return;
 
   if (reset) {
     allReviews = [];
     output().innerHTML = "";
     currentDate = new Date(date);
     noMore = false;
+    document.getElementById("searchBox").style.display = "block";
   }
 
   loading = true;
-  loader().classList.remove("hidden");
+  loader().style.display = "block";
 
   fetch(`/reviews?link=${encodeURIComponent(link)}&date=${fmt(currentDate)}`)
     .then(r => r.json())
     .then(res => {
-      if (!res.data.length) {
+      if (!res.data || res.data.length === 0) {
         noMore = true;
         loader().innerText = "No more reviews";
         return;
@@ -84,60 +172,46 @@ function loadReviews(reset=false) {
 
       allReviews.push(...res.data);
       render(allReviews);
-
       currentDate.setDate(currentDate.getDate() - 1);
-      loader().classList.add("hidden");
+
+      loader().style.display = "none";
       loading = false;
     })
-    .catch(() => loader().innerText = "Error");
+    .catch(() => {
+      loader().innerText = "Error loading";
+      loading = false;
+    });
 }
 
-/* RENDER */
 function render(data) {
   output().innerHTML = "";
-  data.forEach((r, i) => {
-    output().innerHTML += `
-      <div id="review-${i}" class="review-item border-b pb-2">
-        <div>${r.review}</div>
-        <div class="text-xs text-gray-500 mt-1">${r.date}</div>
-      </div>
+  data.forEach(r => {
+    const div = document.createElement("div");
+    div.className = "review";
+    div.innerHTML = `
+      <div class="review-text">${r.review}</div>
+      <div class="review-date">${r.date}</div>
     `;
+    output().appendChild(div);
   });
 }
 
-/* 🔍 SEARCH → SCROLL + HIGHLIGHT */
-function searchAndScroll() {
-  const q = searchInput().value.toLowerCase().trim();
-
-  document.querySelectorAll(".review-item")
-    .forEach(el => el.classList.remove("bg-yellow-100"));
-
-  if (!q || q.length < 3) return;
-
-  for (let i = 0; i < allReviews.length; i++) {
-    if (allReviews[i].review.toLowerCase().includes(q)) {
-      const el = document.getElementById(`review-${i}`);
-      el.classList.add("bg-yellow-100");
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      break;
-    }
-  }
+function searchReviews() {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  render(allReviews.filter(r => r.review.toLowerCase().includes(q)));
 }
 
-/* INFINITE SCROLL */
 output().addEventListener("scroll", () => {
-  if (output().scrollTop + output().clientHeight >= output().scrollHeight - 20) {
+  if (output().scrollTop + output().clientHeight >= output().scrollHeight - 10) {
     loadReviews(false);
   }
 });
 
-/* UTILS */
 function fmt(d){ return d.toISOString().split("T")[0]; }
 function output(){ return document.getElementById("output"); }
 function loader(){ return document.getElementById("loader"); }
 function linkEl(){ return document.getElementById("link"); }
 function dateEl(){ return document.getElementById("date"); }
-function searchInput(){ return document.getElementById("searchInput"); }
 </script>
 
 </body>
