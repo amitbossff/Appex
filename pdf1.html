@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Play Store Reviews</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+
+<body class="bg-gray-100">
+
+<div class="max-w-md mx-auto bg-white min-h-screen flex flex-col">
+
+<!-- HEADER -->
+<div class="sticky top-0 bg-white border-b p-3 z-10">
+  <h2 class="text-center font-bold text-lg mb-2">Play Store Reviews</h2>
+
+  <input id="link" class="w-full border rounded p-2 mb-2 text-sm"
+         placeholder="App ID / Play Store Link">
+
+  <input id="date" type="date"
+         class="w-full border rounded p-2 mb-2 text-sm">
+
+  <button onclick="loadReviews(true)"
+          class="w-full bg-black text-white py-2 rounded text-sm">
+    Load Reviews
+  </button>
+
+  <input id="searchInput"
+         class="w-full border rounded p-2 mt-2 text-sm"
+         placeholder="Paste review text to jump"
+         oninput="searchAndScroll()">
+</div>
+
+<!-- REVIEWS -->
+<div id="output" class="flex-1 overflow-y-auto p-3 space-y-3 text-sm"></div>
+
+<div id="loader" class="text-center text-gray-500 py-3 hidden">
+  Loading...
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<script>
+let allReviews = [];
+let currentDate = null;
+let loading = false;
+let noMore = false;
+
+/* LOAD REVIEWS */
+function loadReviews(reset=false) {
+  if (loading || noMore) return;
+
+  const link = linkEl().value.trim();
+  const date = dateEl().value;
+
+  if (!link || !date) {
+    Toastify({ text: "Enter app link & date", duration: 2000 }).showToast();
+    return;
+  }
+
+  if (reset) {
+    allReviews = [];
+    output().innerHTML = "";
+    currentDate = new Date(date);
+    noMore = false;
+  }
+
+  loading = true;
+  loader().classList.remove("hidden");
+
+  fetch(`/reviews?link=${encodeURIComponent(link)}&date=${fmt(currentDate)}`)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.data.length) {
+        noMore = true;
+        loader().innerText = "No more reviews";
+        return;
+      }
+
+      allReviews.push(...res.data);
+      render(allReviews);
+
+      currentDate.setDate(currentDate.getDate() - 1);
+      loader().classList.add("hidden");
+      loading = false;
+    })
+    .catch(() => loader().innerText = "Error");
+}
+
+/* RENDER */
+function render(data) {
+  output().innerHTML = "";
+  data.forEach((r, i) => {
+    output().innerHTML += `
+      <div id="review-${i}" class="review-item border-b pb-2">
+        <div>${r.review}</div>
+        <div class="text-xs text-gray-500 mt-1">${r.date}</div>
+      </div>
+    `;
+  });
+}
+
+/* 🔍 SEARCH → SCROLL + HIGHLIGHT */
+function searchAndScroll() {
+  const q = searchInput().value.toLowerCase().trim();
+
+  document.querySelectorAll(".review-item")
+    .forEach(el => el.classList.remove("bg-yellow-100"));
+
+  if (!q || q.length < 3) return;
+
+  for (let i = 0; i < allReviews.length; i++) {
+    if (allReviews[i].review.toLowerCase().includes(q)) {
+      const el = document.getElementById(`review-${i}`);
+      el.classList.add("bg-yellow-100");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      break;
+    }
+  }
+}
+
+/* INFINITE SCROLL */
+output().addEventListener("scroll", () => {
+  if (output().scrollTop + output().clientHeight >= output().scrollHeight - 20) {
+    loadReviews(false);
+  }
+});
+
+/* UTILS */
+function fmt(d){ return d.toISOString().split("T")[0]; }
+function output(){ return document.getElementById("output"); }
+function loader(){ return document.getElementById("loader"); }
+function linkEl(){ return document.getElementById("link"); }
+function dateEl(){ return document.getElementById("date"); }
+function searchInput(){ return document.getElementById("searchInput"); }
+</script>
+
+</body>
+</html>
