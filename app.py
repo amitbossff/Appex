@@ -31,7 +31,7 @@ def get_reviews():
             lang="en",
             country="in",
             sort=Sort.NEWEST,
-            count=500   # ⭐ SPEED BOOST
+            count=20000   # ⭐ SPEED BOOST
         )
 
         data = []
