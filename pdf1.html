@@ -17,7 +17,7 @@ body {
   padding: 12px;
 }
 
-/* Container */
+/* App Container */
 .app {
   max-width: 420px;
   margin: auto;
@@ -71,6 +71,17 @@ button:active {
 /* Search */
 .search {
   padding: 0 12px 12px;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search-row button {
+  background: #e5e7eb;
+  color: #000;
+  min-width: 44px;
 }
 
 /* Reviews */
@@ -128,20 +139,21 @@ button:active {
     <button onclick="loadReviews(true)">Load Reviews</button>
   </div>
 
+  <!-- Search Box -->
   <div class="search" id="searchBox" style="display:none">
-  <div style="display:flex; gap:8px;">
-    <input id="searchInput"
-           placeholder="Search reviews..."
-           oninput="searchReviews()"
-           style="flex:1">
-    <button onclick="clearSearch()" style="background:#e5e7eb;color:#000;">
-      ✕
-    </button>
-  </div>
+    <div class="search-row">
+      <input id="searchInput"
+             placeholder="Search reviews..."
+             oninput="searchReviews()"
+             style="flex:1">
+      <button onclick="clearSearch()">✕</button>
+    </div>
   </div>
 
+  <!-- Reviews -->
   <div class="reviews" id="output"></div>
 
+  <!-- Loader -->
   <div class="loader" id="loader">Loading...</div>
 </div>
 
@@ -164,6 +176,7 @@ function loadReviews(reset=false) {
     currentDate = new Date(date);
     noMore = false;
     document.getElementById("searchBox").style.display = "block";
+    loader().innerText = "Loading...";
   }
 
   loading = true;
@@ -209,20 +222,20 @@ function searchReviews() {
   render(allReviews.filter(r => r.review.toLowerCase().includes(q)));
 }
 
+function clearSearch() {
+  const input = document.getElementById("searchInput");
+  input.value = "";
+  render(allReviews);
+}
+
+/* Infinite Scroll */
 output().addEventListener("scroll", () => {
   if (output().scrollTop + output().clientHeight >= output().scrollHeight - 10) {
     loadReviews(false);
   }
 });
 
-<script>
-function clearSearch() {
-  const input = document.getElementById("searchInput");
-  input.value = "";
-  render(allReviews);
-}
-</script>                          
-
+/* Helpers */
 function fmt(d){ return d.toISOString().split("T")[0]; }
 function output(){ return document.getElementById("output"); }
 function loader(){ return document.getElementById("loader"); }
@@ -231,4 +244,4 @@ function dateEl(){ return document.getElementById("date"); }
 </script>
 
 </body>
-</html>
+  </html>
