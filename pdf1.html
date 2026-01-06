@@ -129,7 +129,15 @@ button:active {
   </div>
 
   <div class="search" id="searchBox" style="display:none">
-    <input id="searchInput" placeholder="Search reviews..." oninput="searchReviews()">
+  <div style="display:flex; gap:8px;">
+    <input id="searchInput"
+           placeholder="Search reviews..."
+           oninput="searchReviews()"
+           style="flex:1">
+    <button onclick="clearSearch()" style="background:#e5e7eb;color:#000;">
+      ✕
+    </button>
+  </div>
   </div>
 
   <div class="reviews" id="output"></div>
@@ -206,6 +214,14 @@ output().addEventListener("scroll", () => {
     loadReviews(false);
   }
 });
+
+<script>
+function clearSearch() {
+  const input = document.getElementById("searchInput");
+  input.value = "";
+  render(allReviews);
+}
+</script>                          
 
 function fmt(d){ return d.toISOString().split("T")[0]; }
 function output(){ return document.getElementById("output"); }
