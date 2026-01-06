@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Play Store Reviews</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+
+<body class="bg-gray-100 p-4">
+
+<div class="max-w-md mx-auto bg-white border p-3">
+
+<h2 class="text-center font-bold mb-2">
+Play Store Reviews
+</h2>
+
+<input id="link" class="w-full border p-2 mb-2" placeholder="App ID / Link">
+<input id="date" type="date" class="w-full border p-2 mb-2">
+
+<button onclick="loadReviews(true)"
+class="w-full bg-black text-white py-2">
+Load Reviews
+</button>
+
+<!-- Search -->
+<div id="searchBox" class="hidden mt-2">
+<input id="searchInput" class="w-full border p-2 mb-2"
+placeholder="Search review text"
+oninput="searchReviews()">
+</div>
+
+<div id="output" class="mt-2 h-96 overflow-y-auto border p-2 text-sm"></div>
+
+<div id="loader" class="hidden text-center text-gray-500 py-2">
+Loading...
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<script>
+let allReviews = [];
+let currentDate = null;
+let loading = false;
+let noMore = false;
+
+function loadReviews(reset=false) {
+  if (loading || noMore) return;
+
+  const link = linkEl().value;
+  const date = dateEl().value;
+
+  if (!link || !date) return;
+
+  if (reset) {
+    allReviews = [];
+    output().innerHTML = "";
+    currentDate = new Date(date);
+    noMore = false;
+  }
+
+  loading = true;
+  loader().classList.remove("hidden");
+
+  fetch(`/reviews?link=${encodeURIComponent(link)}&date=${fmt(currentDate)}`)
+    .then(r => r.json())
+    .then(res => {
+      if (res.data.length === 0) {
+        noMore = true;
+        loader().innerText = "No more reviews";
+        return;
+      }
+
+      allReviews.push(...res.data);
+      render(allReviews);
+
+      currentDate.setDate(currentDate.getDate() - 1);
+      loader().classList.add("hidden");
+      loading = false;
+    })
+    .catch(() => {
+      loader().innerText = "Error loading";
+      loading = false;
+    });
+}
+
+function render(data) {
+  output().innerHTML = "";
+  data.forEach(r => {
+    output().innerHTML += `
+      <div class="border-b py-2">
+        <div>${r.review}</div>
+        <div class="text-xs text-gray-500">${r.date}</div>
+      </div>
+    `;
+  });
+}
+
+function searchReviews() {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  render(allReviews.filter(r => r.review.toLowerCase().includes(q)));
+}
+
+output().addEventListener("scroll", () => {
+  if (output().scrollTop + output().clientHeight >= output().scrollHeight - 10) {
+    loadReviews(false);
+  }
+});
+
+function fmt(d){ return d.toISOString().split("T")[0]; }
+function output(){ return document.getElementById("output"); }
+function loader(){ return document.getElementById("loader"); }
+function linkEl(){ return document.getElementById("link"); }
+function dateEl(){ return document.getElementById("date"); }
+</script>
+
+</body>
+  </html>
